@@ -11,16 +11,55 @@ export function digits(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+/**
+ * Formata qualquer data para o padrão brasileiro DD-MM-AAAA.
+ * Aceita: 2026-05-11, 2026-05-11T10:00:00, 11/05/2026, Date
+ */
 export function formatDate(dateStr) {
-  if (!dateStr) return '—'
-  if (String(dateStr).includes('/')) return dateStr
-  const [y, m, d] = String(dateStr).split('-')
-  if (!y || !m || !d) return dateStr
-  return `${d}/${m}/${y}`
+  if (dateStr == null || dateStr === '') return '—'
+
+  if (dateStr instanceof Date && !isNaN(dateStr)) {
+    const d = String(dateStr.getDate()).padStart(2, '0')
+    const m = String(dateStr.getMonth() + 1).padStart(2, '0')
+    const y = dateStr.getFullYear()
+    return `${d}-${m}-${y}`
+  }
+
+  const raw = String(dateStr).trim()
+
+  // já em DD-MM-AAAA ou DD/MM/AAAA
+  const br = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})/)
+  if (br) return `${br[1]}-${br[2]}-${br[3]}`
+
+  // ISO: AAAA-MM-DD ou AAAA-MM-DDTHH:mm:ss
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (iso) return `${iso[3]}-${iso[2]}-${iso[1]}`
+
+  // tenta Date nativo
+  const parsed = new Date(raw)
+  if (!isNaN(parsed.getTime())) {
+    const d = String(parsed.getDate()).padStart(2, '0')
+    const m = String(parsed.getMonth() + 1).padStart(2, '0')
+    const y = parsed.getFullYear()
+    return `${d}-${m}-${y}`
+  }
+
+  return raw
+}
+
+/** Troca datas ISO (AAAA-MM-DD) dentro de um texto por DD-MM-AAAA */
+export function formatDatesInText(text) {
+  if (!text) return text
+  return String(text).replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, '$3-$2-$1')
 }
 
 export function todayIso() {
-  return new Date().toISOString().slice(0, 10)
+  // valor interno para <input type="date"> continua ISO
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 export function uid() {

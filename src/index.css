@@ -1129,3 +1129,17 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* Campo doador (somente leitura) no cadastro de doação */
+input.campo-doador-ok {
+  background: #f0faf3 !important;
+  color: #1a5c2e !important;
+  font-weight: 600;
+  border-color: #8bc9a0 !important;
+}
+input.campo-doador-erro {
+  background: #fdf2f2 !important;
+  color: #8b1a2b !important;
+  border-color: #e0a0a8 !important;
+}

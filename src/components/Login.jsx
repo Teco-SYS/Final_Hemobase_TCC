@@ -88,7 +88,8 @@ export default function Login({ onLogin }) {
         <div className="login-panel">
           <div className="login-header">
             <div className="logo">
-              <span className="i i-cross logo-icon" />
+              <img class="img-icon img-lg" src="img/emo-removebg-preview.png" alt="Logo"/>
+
               <h1>Hemobanco</h1>
             </div>
             <p>Sistema unificado de informações de doadores de sangue e hemocomponentes</p>

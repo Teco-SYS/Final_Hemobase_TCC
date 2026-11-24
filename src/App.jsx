@@ -3,6 +3,7 @@ import Login from './components/Login'
 import AppShell from './components/AppShell'
 import Painel from './pages/Painel'
 import CadastroDoadores from './pages/CadastroDoadores'
+import CadastroColaboradores from './pages/CadastroColaboradores'
 import CadastroDoacao from './pages/CadastroDoacao'
 import DoadoresBloqueados from './pages/DoadoresBloqueados'
 import Declaracoes from './pages/Declaracoes'
@@ -50,8 +51,9 @@ export default function App() {
         setPage('painel')
       }}
     >
-      {page === 'painel' && <Painel onNavigate={setPage} />}
+      {page === 'painel' && <Painel />}
       {page === 'cadastro-doadores' && <CadastroDoadores />}
+      {page === 'cadastro-colaboradores' && <CadastroColaboradores />}
       {page === 'cadastro-doacao' && <CadastroDoacao />}
       {page === 'doadores-bloqueados' && <DoadoresBloqueados />}
       {page === 'gerar-declaracoes' && <Declaracoes />}

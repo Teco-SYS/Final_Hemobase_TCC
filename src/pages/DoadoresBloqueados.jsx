@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { doadoresApi, situacoesApi, tiposBloqueioApi } from '../lib/api'
-import { digits, formatDate, maskCpf, todayIso } from '../lib/utils'
+import { digits, formatDate, formatDatesInText, maskCpf, todayIso } from '../lib/utils'
 
 export default function DoadoresBloqueados() {
   const [situacoes, setSituacoes] = useState([])
@@ -31,7 +31,7 @@ export default function DoadoresBloqueados() {
 
   useEffect(() => {
     carregar().catch((e) =>
-      setAlert({ kind: 'error', text: `API: ${e.message}. Suba o backend na porta 3000.` })
+      setAlert({ kind: 'error', text: formatDatesInText(`API: ${e.message}. Suba o backend na porta 3000.`) })
     )
   }, [])
 
@@ -53,8 +53,39 @@ export default function DoadoresBloqueados() {
     })
   }, [bloqueios, doadores, applied])
 
+  function addDaysIso(days) {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + Number(days))
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
   function onForm(field) {
-    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+    return (e) => {
+      const value = e.target.value
+      setForm((f) => {
+        const next = { ...f, [field]: value }
+
+        // Ao escolher o tipo de bloqueio, preenche data limite pelo prazo_dias
+        if (field === 'tipo_bloqueio_id') {
+          const tipo = tiposBloqueio.find((t) => String(t.id) === String(value))
+          if (tipo && tipo.prazo_dias != null && tipo.prazo_dias !== '') {
+            next.data_limite = addDaysIso(tipo.prazo_dias)
+          } else {
+            // sem prazo definido (ex.: permanente) → limpa a data
+            next.data_limite = ''
+          }
+          // sugere o motivo com a descrição do tipo, se o campo ainda estiver vazio
+          if (tipo && !f.motivo.trim()) {
+            next.motivo = tipo.descricao
+          }
+        }
+        return next
+      })
+    }
   }
 
   async function submitAdd(e) {
@@ -83,7 +114,7 @@ export default function DoadoresBloqueados() {
       })
       setAlert({ kind: 'success', text: 'Bloqueio registrado no banco (tabela situacoes).' })
     } catch (err) {
-      setAlert({ kind: 'error', text: err.message || 'Erro ao bloquear doador.' })
+      setAlert({ kind: 'error', text: formatDatesInText(err.message || 'Erro ao bloquear doador.') })
     } finally {
       setLoading(false)
     }
@@ -95,7 +126,7 @@ export default function DoadoresBloqueados() {
       await carregar()
       setAlert({ kind: 'success', text: 'Bloqueio removido.' })
     } catch (err) {
-      setAlert({ kind: 'error', text: err.message })
+      setAlert({ kind: 'error', text: formatDatesInText(err.message) })
     }
   }
 
@@ -135,7 +166,7 @@ export default function DoadoresBloqueados() {
               </select>
             </div>
             <div className="form-group">
-              <label>Data limite</label>
+              <label>Data limite <span style={{ fontWeight: 400, color: '#888' }}>(preenchida pelo tipo)</span></label>
               <input type="date" value={form.data_limite} onChange={onForm('data_limite')} />
             </div>
           </div>

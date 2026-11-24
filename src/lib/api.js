@@ -92,6 +92,10 @@ export const tiposBloqueioApi = {
 
 export const funcionariosApi = {
   listar: () => api.get('/funcionarios'),
+  buscar: (id) => api.get(`/funcionarios/${id}`),
+  criar: (dados) => api.post('/funcionarios', dados),
+  atualizar: (id, dados) => api.put(`/funcionarios/${id}`, dados),
+  deletar: (id) => api.del(`/funcionarios/${id}`),
 }
 
 export const instituicoesApi = {

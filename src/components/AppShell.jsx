@@ -1,5 +1,15 @@
-const NAV = [
+const NAV_BASE = [
   { id: 'painel', label: 'Painel de Controle', icon: 'i-home' },
+]
+
+const NAV_EMPRESA = [
+  { id: 'cadastro-colaboradores', label: 'Cadastro de colaboradores', icon: 'i-user' },
+  { id: 'doadores-bloqueados', label: 'Doadores bloqueados', icon: 'i-block' },
+  { id: 'gerar-declaracoes', label: 'Gerar declarações', icon: 'i-doc' },
+  { id: 'notificacoes', label: 'Notificações', icon: 'i-bell' },
+]
+
+const NAV_COLABORADOR = [
   { id: 'cadastro-doadores', label: 'Cadastro de doadores', icon: 'i-user' },
   { id: 'cadastro-doacao', label: 'Cadastro de doação', icon: 'i-cross' },
   { id: 'doadores-bloqueados', label: 'Doadores bloqueados', icon: 'i-block' },
@@ -8,6 +18,16 @@ const NAV = [
 ]
 
 export default function AppShell({ user, page, onNavigate, onLogout, children }) {
+  const isEmpresa = user?.tipo === 'empresa'
+  const nav = [...NAV_BASE, ...(isEmpresa ? NAV_EMPRESA : NAV_COLABORADOR)]
+
+  const tipoLabel =
+    user?.tipo === 'empresa'
+      ? 'Hemocentro'
+      : user?.tipo === 'colaborador'
+        ? 'Colaborador'
+        : 'Usuário'
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -15,12 +35,12 @@ export default function AppShell({ user, page, onNavigate, onLogout, children })
           <div className="user-avatar">{(user?.nome || 'U').charAt(0).toUpperCase()}</div>
           <div className="user-info">
             <h3>{user?.nome || 'Usuário'}</h3>
-            <span>{user?.tipo === 'empresa' ? 'Hemocentro' : user?.tipo === 'colaborador' ? 'Colaborador' : 'Usuário'}</span>
+            <span>{tipoLabel}</span>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <a
               key={item.id}
               className={`nav-item ${page === item.id ? 'active' : ''}`}
@@ -49,7 +69,7 @@ export default function AppShell({ user, page, onNavigate, onLogout, children })
             <span className="badge">39 Municípios</span>
           </div>
           <div className="brand">
-            <span className="i i-cross" /> Hemobanco
+            <img class="img-icon img-lg" src="img/emo-removebg-preview.png" alt="Logo"/> Hemobanco
           </div>
         </header>
         <div className="content-area">{children}</div>
