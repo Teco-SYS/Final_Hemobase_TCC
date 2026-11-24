@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { doadoresApi, situacoesApi, tiposBloqueioApi } from '../lib/api'
-import { digits, formatDate, formatDatesInText, maskCpf, todayIso } from '../lib/utils'
+import { digits, formatDate, formatDatesInText, maskCpf } from '../lib/utils'
 
 export default function DoadoresBloqueados() {
   const [situacoes, setSituacoes] = useState([])
   const [doadores, setDoadores] = useState([])
   const [tiposBloqueio, setTiposBloqueio] = useState([])
+  const [cpfBusca, setCpfBusca] = useState('')
   const [query, setQuery] = useState({ cpf: '', nome: '', motivo: '' })
   const [applied, setApplied] = useState({ cpf: '', nome: '', motivo: '' })
   const [form, setForm] = useState({
@@ -35,6 +36,12 @@ export default function DoadoresBloqueados() {
     )
   }, [])
 
+  const doadorEncontrado = useMemo(() => {
+    const cpf = digits(cpfBusca)
+    if (cpf.length !== 11) return null
+    return doadores.find((d) => digits(d.cpf || '') === cpf) || null
+  }, [cpfBusca, doadores])
+
   const bloqueios = useMemo(
     () => (situacoes || []).filter((s) => s.tipo_bloqueio_id != null),
     [situacoes]
@@ -63,55 +70,62 @@ export default function DoadoresBloqueados() {
     return `${y}-${m}-${day}`
   }
 
+  function motivoDoTipo(tipo) {
+    if (!tipo) return ''
+    const descricao = String(tipo.descricao || '').toLowerCase()
+    const definitivo = tipo.prazo_dias == null || descricao.includes('definit') || descricao.includes('permanent')
+    return definitivo ? 'Bloqueio Definitivo' : 'Bloqueio Temporário'
+  }
+
   function onForm(field) {
     return (e) => {
       const value = e.target.value
       setForm((f) => {
         const next = { ...f, [field]: value }
-
-        // Ao escolher o tipo de bloqueio, preenche data limite pelo prazo_dias
         if (field === 'tipo_bloqueio_id') {
           const tipo = tiposBloqueio.find((t) => String(t.id) === String(value))
           if (tipo && tipo.prazo_dias != null && tipo.prazo_dias !== '') {
             next.data_limite = addDaysIso(tipo.prazo_dias)
           } else {
-            // sem prazo definido (ex.: permanente) → limpa a data
             next.data_limite = ''
           }
-          // sugere o motivo com a descrição do tipo, se o campo ainda estiver vazio
-          if (tipo && !f.motivo.trim()) {
-            next.motivo = tipo.descricao
-          }
+          next.motivo = motivoDoTipo(tipo)
+          next.descricao = next.motivo === 'Bloqueio Definitivo' ? 'Bloqueado definitivamente' : 'Bloqueado temporariamente'
         }
         return next
       })
     }
   }
 
+  function onCpfChange(e) {
+    const value = maskCpf(e.target.value)
+    setCpfBusca(value)
+    const cpf = digits(value)
+    const encontrado = cpf.length === 11
+      ? doadores.find((d) => digits(d.cpf || '') === cpf)
+      : null
+    setForm((f) => ({ ...f, doador_id: encontrado ? String(encontrado.id) : '' }))
+  }
+
   async function submitAdd(e) {
     e.preventDefault()
     setAlert(null)
     if (!form.doador_id || !form.tipo_bloqueio_id || !form.motivo) {
-      setAlert({ kind: 'error', text: 'Selecione doador, tipo de bloqueio e informe o motivo.' })
+      setAlert({ kind: 'error', text: 'Informe um CPF cadastrado e selecione o tipo de bloqueio.' })
       return
     }
     setLoading(true)
     try {
       await situacoesApi.criar({
-        descricao: form.descricao || 'Bloqueado temporariamente',
+        descricao: form.descricao,
         tipo_bloqueio_id: Number(form.tipo_bloqueio_id),
-        motivo: form.motivo.trim(),
+        motivo: form.motivo,
         data_limite: form.data_limite || null,
         doador_id: Number(form.doador_id),
       })
       await carregar()
-      setForm({
-        doador_id: '',
-        tipo_bloqueio_id: '',
-        motivo: '',
-        data_limite: '',
-        descricao: 'Bloqueado temporariamente',
-      })
+      setCpfBusca('')
+      setForm({ doador_id: '', tipo_bloqueio_id: '', motivo: '', data_limite: '', descricao: 'Bloqueado temporariamente' })
       setAlert({ kind: 'success', text: 'Bloqueio registrado no banco (tabela situacoes).' })
     } catch (err) {
       setAlert({ kind: 'error', text: formatDatesInText(err.message || 'Erro ao bloquear doador.') })
@@ -145,13 +159,22 @@ export default function DoadoresBloqueados() {
         <h3 className="section-subtitle"><span className="i i-plus" /> Adicionar bloqueio (situações)</h3>
         <form onSubmit={submitAdd}>
           <div className="form-group">
-            <label>Doador *</label>
-            <select value={form.doador_id} onChange={onForm('doador_id')} required>
-              <option value="">Selecione...</option>
-              {doadores.map((d) => (
-                <option key={d.id} value={d.id}>{d.nome} — {d.cpf}</option>
-              ))}
-            </select>
+            <label htmlFor="cpf-doador-bloqueio">Doador *</label>
+            <input
+              id="cpf-doador-bloqueio"
+              value={cpfBusca}
+              onChange={onCpfChange}
+              placeholder="Digite o CPF do doador..."
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={14}
+              required
+            />
+            {digits(cpfBusca).length === 11 && (
+              <small style={{ display: 'block', marginTop: 6, color: doadorEncontrado ? '#218838' : '#b02a37' }}>
+                {doadorEncontrado ? `Doador encontrado: ${doadorEncontrado.nome}` : 'Nenhum doador encontrado com este CPF.'}
+              </small>
+            )}
           </div>
           <div className="form-row">
             <div className="form-group">
@@ -172,10 +195,10 @@ export default function DoadoresBloqueados() {
           </div>
           <div className="form-group">
             <label>Motivo *</label>
-            <input value={form.motivo} onChange={onForm('motivo')} required />
+            <input value={form.motivo} placeholder="Definido pelo tipo de bloqueio" readOnly required />
           </div>
           <div className="form-actions">
-            <button type="submit" className="btn btn-dark" disabled={loading}>
+            <button type="submit" className="btn btn-dark" disabled={loading || !doadorEncontrado}>
               {loading ? 'Salvando...' : 'Adicionar bloqueio'}
             </button>
           </div>
@@ -212,13 +235,7 @@ export default function DoadoresBloqueados() {
       <div className="table-container">
         <table>
           <thead>
-            <tr>
-              <th>Doador</th>
-              <th>Tipo bloqueio</th>
-              <th>Motivo</th>
-              <th>Data limite</th>
-              <th />
-            </tr>
+            <tr><th>Doador</th><th>Tipo bloqueio</th><th>Motivo</th><th>Data limite</th><th /></tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
@@ -230,11 +247,7 @@ export default function DoadoresBloqueados() {
                   <td><span className="badge-motivo">{tipoLabel(s.tipo_bloqueio_id)}</span></td>
                   <td>{s.motivo || s.descricao}</td>
                   <td>{s.data_limite ? formatDate(s.data_limite) : 'Indeterminado'}</td>
-                  <td>
-                    <button type="button" className="btn-remover" title="Remover" onClick={() => remover(s.id)}>
-                      <span className="i i-block" />
-                    </button>
-                  </td>
+                  <td><button type="button" className="btn-remover" title="Remover" onClick={() => remover(s.id)}><span className="i i-block" /></button></td>
                 </tr>
               ))
             )}
