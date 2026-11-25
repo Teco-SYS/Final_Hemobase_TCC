@@ -24,7 +24,7 @@ export default function App() {
   if (!ready) {
     return (
       <div className="login-page">
-        <p style={{ color: '#fff', fontSize: 18 }}>Hemobanco</p>
+        <p style={{ color: '#fff', fontSize: 18 }}>Hemobase</p>
       </div>
     )
   }

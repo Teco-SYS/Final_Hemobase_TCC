@@ -224,7 +224,7 @@ export default function Declaracoes() {
         <div className="form-container" style={{ marginTop: 24 }}>
           <div className="declaracao-preview">
             <div className="decl-doc">
-              <h3>HEMOBANCO</h3>
+              <h3>HEMOBASE</h3>
               <p className="decl-sub">Rede Metropolitana de São Paulo — RMSP</p>
               <hr />
               <h4>DECLARAÇÃO DE DOAÇÃO / COMPARECIMENTO</h4>
@@ -252,11 +252,11 @@ export default function Declaracoes() {
               </p>
               <div className="decl-assinatura">
                 <div className="decl-linha-assinatura" />
-                <p>Hemobanco — Rede RMSP</p>
+                <p>Hemobase — Rede RMSP</p>
                 <p className="decl-sub">Documento gerado eletronicamente</p>
               </div>
               <p className="decl-rodape">
-                Sistema Hemobanco • Região Metropolitana de São Paulo • 39 Municípios
+                Sistema Hemobase • Região Metropolitana de São Paulo • 39 Municípios
               </p>
             </div>
           </div>
