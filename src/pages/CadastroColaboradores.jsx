@@ -95,7 +95,7 @@ export default function CadastroColaboradores() {
     <section className="page-section">
       <h2 className="page-title">Cadastro de colaboradores</h2>
       <p className="page-subtitle">
-        Funcionários da instituição que operam o Hemobase (matrícula usada no login).
+        Funcionários da instituição que operam o Hemobanco (matrícula usada no login).
       </p>
       {alert ? <div className={`alert alert-${alert.kind} show`}>{alert.text}</div> : null}
 
